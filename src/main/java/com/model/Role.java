@@ -17,3 +17,4 @@ public class Role {
     @Column(name = "role")
     private String role;
 }
+//insert into tbl_nane (col1,col2)VALUES(XXX)
