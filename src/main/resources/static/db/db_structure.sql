@@ -1,3 +1,4 @@
+-- host localhost     database: db_example
 -- Table structure for table `role`
 
 DROP TABLE IF EXISTS `role`;
