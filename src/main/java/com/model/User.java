@@ -3,25 +3,11 @@ package com.model;
 import com.validators.ExtendedEmailValidator;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Email;
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.NotEmpty;
-
 import javax.persistence.*;
-import javax.validation.Constraint;
-import javax.validation.Payload;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 import java.util.Set;
-
-import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Setter
 @Getter
@@ -59,4 +45,10 @@ public class User {
 
     @ExtendedEmailValidator
     private String email;
+
+    @Column(name = "enabled")
+    private boolean enabled;
+
+    @Column(name = "confirmation_Email_token")
+    String confirmationEmailToken;
 }
