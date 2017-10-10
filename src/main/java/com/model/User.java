@@ -21,9 +21,6 @@ public class User {
     private int id;
 
     @Column(name = "password")
-    @Length(min = 5, message = "*Your password must have at least 5 characters")
-    @Size(min=1)
-    @NotNull(message = "*Please provide your password")
     private String password;
 
     @Column(name = "name")
@@ -37,7 +34,7 @@ public class User {
     private String lastName;
 
     @Column(name = "active")
-    private int active;
+    private int active = 1;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 
 @Service("userService")
 public class UserServiceImpl implements UserService {
@@ -29,8 +30,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void saveUser(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-        user.setActive(1);
+        user.setEnabled(false);
         Role userRole = roleRepository.findByRole("ADMIN");
         user.setRoles(new HashSet<Role>(Arrays.asList(userRole)));
         userRepository.save(user);
@@ -38,6 +38,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User findByConfirmationEmailToken(String confirmationEmailToken) {
-        return userRepository.findByEmail(confirmationEmailToken);
+        return userRepository.findByConfirmationEmailToken(confirmationEmailToken);
     }
+
 }

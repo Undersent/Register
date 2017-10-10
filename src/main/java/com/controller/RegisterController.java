@@ -8,6 +8,7 @@ import com.service.EmailServiceImpl;
 import com.service.EmailServiceSMM;
 import com.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -29,9 +30,11 @@ public class RegisterController {
     @Autowired
     private UserService userService;
     @Autowired
-    private EmailServiceImpl emailService;
+    private EmailServiceSMM emailService;
     @Autowired
-    private BCryptPasswordEncoder bCryptPasswordEncoder;;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    Environment environment;
 
     @RequestMapping(value="/registration", method = RequestMethod.GET)
     public ModelAndView registration(){
@@ -49,25 +52,23 @@ public class RegisterController {
         if(userExists != null){
             bindingResult
                     .rejectValue("email", "error.user",
-                            "There is already a registered with that email");
+                            "There is a user already registered with that email");
         }
         if (bindingResult.hasErrors()) {
             modelAndView.setViewName("registration");
         } else {
             createUser(modelAndView, user,request);
-
         }
         return modelAndView;
     }
 
     private void createUser(ModelAndView modelAndView, User user,
                             HttpServletRequest request) {
-        user.setEnabled(false);
         user.setConfirmationEmailToken(UUID.randomUUID().toString());
         userService.saveUser(user);
         modelAndView.addObject("successMessage", "User has been registered :)" +
                 ", confirmation e-mail has been sent to: " + user.getEmail());
-        sendEmailToUser(user,request );
+        sendEmailToUser(user,request);
         modelAndView.addObject("user", new User());
         modelAndView.setViewName("registration");
     }
@@ -76,19 +77,23 @@ public class RegisterController {
         String confirmationUrl = request.getScheme() + "://" + request.getServerName();
         SimpleMailMessage registrationEmail = new SimpleMailMessage();
         registrationEmail.setTo(user.getEmail());
+        registrationEmail.setSubject("Registration Confirmation");
         registrationEmail.setText("To confirm your e-mail click link below:\n" +
-                confirmationUrl + "/confirm?token=" + user.getConfirmationEmailToken());
+                confirmationUrl+":"+ environment.getProperty("local.server.port")
+                + "/confirm?token=" + user.getConfirmationEmailToken());
+        registrationEmail.setFrom("noreply@gmail.com");
         emailService.sendEmail(registrationEmail);
+
     }
 
     @RequestMapping(value="/confirm", method = RequestMethod.GET)
-    public ModelAndView showCOnfrimationPage(ModelAndView modelAndView,
-                                             @RequestParam("token") String token){
+    public ModelAndView showConfirmationPage(ModelAndView modelAndView,
+                                             @RequestParam("token") String token ){
         User user = userService.findByConfirmationEmailToken(token);
         if(user == null){
             modelAndView.addObject("invalidToken", "Wrong confirmation link");
         }else{
-            modelAndView.addObject("confirmedToken", user.getConfirmationEmailToken());
+            modelAndView.addObject("confirmationToken", user.getConfirmationEmailToken());
         }
         modelAndView.setViewName("confirm");
         return modelAndView;
@@ -100,13 +105,13 @@ public class RegisterController {
         modelAndView.setViewName("confirm");
         Zxcvbn passwordCheck = new Zxcvbn();
         Strength strength = passwordCheck.measure((String)requestParams.get("password"));
-        if(strength.getScore() < 3){
+        if(strength.getScore() < 2){
             bindingResult.reject("password");
             redir.addFlashAttribute("errorMessage", "Your password is to week");
             return modelAndView;
         }
-        User user = userService.findByConfirmationEmailToken((String)requestParams.get("token"));
-        user.setPassword(bCryptPasswordEncoder.encode((String)requestParams.get("password")));
+        User user = userService.findByConfirmationEmailToken((String) requestParams.get("token"));
+        user.setPassword(bCryptPasswordEncoder.encode((String) requestParams.get("password")));
         user.setEnabled(true);
         userService.saveUser(user);
         modelAndView.addObject("successMessage", "Your password has been set!");
